@@ -282,7 +282,7 @@ pub fn controller_connection_task(
                     send_command(&mut link.lock(), &base, cmd).ok();
                 },
                 InterfaceCommand::ResetController => {
-                    // link.lock().reset()
+                    link.lock().debug_resetsys()
                 },
             }
         }

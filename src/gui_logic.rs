@@ -239,6 +239,9 @@ impl GuiState {
                     if ui.small_button(im_str!("Save Configuration")) {
                         self.controller_commands.lock().push(InterfaceCommand::SendCommand(Command::SaveServoConfig));
                     }
+                    if ui.small_button(im_str!("Reset Microcontroller")) {
+                        self.controller_commands.lock().push(InterfaceCommand::ResetController);
+                    }
 
                     ui.next_column();
 
