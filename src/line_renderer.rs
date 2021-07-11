@@ -8,6 +8,7 @@ use vulkano::command_buffer::AutoCommandBufferBuilder;
 use vulkano::command_buffer::DynamicState;
 use vulkano::command_buffer::PrimaryAutoCommandBuffer;
 use vulkano::command_buffer::SubpassContents;
+use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
 use vulkano::format::ClearValue;
 use vulkano::format::Format;
 use vulkano::memory::pool::StdMemoryPool;
@@ -39,6 +40,7 @@ pub struct LineRenderer {
     pub render_pass : Arc<RenderPass>,
     pub image : Option<Arc<StorageImage>>,
     pub vertex_pool : CpuBufferPool<Vertex>,
+    pub uniform_pool : CpuBufferPool<line_vs::ty::UniformBlock0>,
     pub vertex_buffers : Vec<Arc<CpuBufferPoolChunk<Vertex, Arc<StdMemoryPool>>>>,
     pub texture_id : Option<TextureId>,
 }
@@ -103,12 +105,14 @@ impl LineRenderer {
         );
 
         let vertex_pool = CpuBufferPool::<Vertex>::new(system.device.clone(), BufferUsage::all());
+        let uniform_pool = CpuBufferPool::<line_vs::ty::UniformBlock0>::new(system.device.clone(), BufferUsage::all());
 
         LineRenderer {
             render_pass,
             pipeline,
             image : None,
             vertex_pool,
+            uniform_pool,
             vertex_buffers : vec![],
             texture_id : None,
         }
@@ -132,7 +136,6 @@ impl LineRenderer {
                 vec![1.0.into(), [0.05, 0.05, 0.05, 1.0].into(), ClearValue::None]
             ).expect("failed to start render pass");
 
-
             for vb in self.vertex_buffers.drain(0..) {
 
                 let ds = DynamicState {
@@ -145,12 +148,24 @@ impl LineRenderer {
                     ..DynamicState::none()
                 };
 
-                cmd_buf_builder.draw(
-                    self.pipeline.clone(), &ds, vec![vb.clone()], (), 
-                        line_vs::ty::PushConstants {
-                            matrix : (v_matrix * tmatrix).into(),
-                            viewport : [width as f32, height as f32],
-                        },
+                let uniforms = self.uniform_pool.next(
+                    line_vs::ty::UniformBlock0 {
+                        matrix : (v_matrix * tmatrix).into(),
+                        viewport : [width as f32, height as f32],
+                    }
+                ).unwrap();
+
+                let layout = self.pipeline.layout().descriptor_set_layout(0).unwrap();
+                let desc_set = Arc::new(PersistentDescriptorSet::start(layout.clone())
+                    .add_buffer(uniforms).unwrap()
+                    .build().unwrap()
+                );
+
+                cmd_buf_builder
+                    .draw(
+                        self.pipeline.clone(), &ds, vec![vb.clone()], 
+                        desc_set, 
+                        (),
                         vec![]
                     )
                     .expect("failed to draw line");
