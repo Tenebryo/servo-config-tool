@@ -1,7 +1,6 @@
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
-use std::time::Duration;
 
 use cgmath::Vector3;
 use parking_lot::Mutex;
@@ -192,8 +191,8 @@ impl GuiState {
                         
                         cfg_parameter_widget!(
                             ui, self.controller_commands, 
-                            "Turns Per Step", "Value##Turns Per Step", 
-                            servo_config.turns_per_step, OFFSET_TURNS_PER_STEP
+                            "Steps Per Turn", "Value##Steps Per Turn", 
+                            servo_config.steps_per_turn, OFFSET_TURNS_PER_STEP
                         );
                         
                         cfg_parameter_widget!(
@@ -257,21 +256,28 @@ impl GuiState {
                     if ui.small_button(im_str!("Position Step 1.0")) {
                         self.controller_commands.lock().push(InterfaceCommand::PositionCommand(1.0));
                     }
-                    if ui.small_button(im_str!("1Hz Sine Input")) {
-                        let running = Arc::new(AtomicBool::new(true));
-                        let running_thread = running.clone();
-                        let commands = self.controller_commands.clone();
-                        std::thread::spawn(move || {
-                            let mut t = 0.0;
-                            while running_thread.load(Ordering::Relaxed) {
-                                let x = (t/std::f32::consts::TAU).sin();
-                                commands.lock().push(InterfaceCommand::PositionCommand(x));
-                                std::thread::sleep(Duration::from_millis(5));
-                                t += 0.005;
-                            }
-                        });
+                    if ui.small_button(im_str!("Sine Input")) {
+                        // let running = Arc::new(AtomicBool::new(true));
+                        // let running_thread = running.clone();
+                        // let commands = self.controller_commands.clone();
+                        // std::thread::spawn(move || {
+                        //     let mut t = 0.0;
+                        //     while running_thread.load(Ordering::Relaxed) {
+                        //         let x = 0.25 * (4.0*t*std::f32::consts::TAU).sin();
+                        //         commands.lock().push(InterfaceCommand::PositionCommand(x));
+                        //         std::thread::sleep(Duration::from_millis(5));
+                        //         t += 0.005;
+                        //     }
+                        // });
+                        // self.tasks.push(GuiTask{name : "Sine Input".to_string(), running});
 
-                        self.tasks.push(GuiTask{name : "Sine Input".to_string(), running});
+                        self.controller_commands.lock().push(InterfaceCommand::SendCommand(Command::SetMotionProfile{profile: 1}));
+
+                    }
+                    if ui.small_button(im_str!("Clear Motion Profile")) {
+
+                        self.controller_commands.lock().push(InterfaceCommand::SendCommand(Command::SetMotionProfile{profile: 0}));
+
                     }
 
                     ui.next_column();

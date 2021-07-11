@@ -25,6 +25,9 @@ pub enum Command {
     FindLowerMotionLimit,
     LoadServoConfig,
     SaveServoConfig,
+    SetMotionProfile {
+        profile : u32,
+    }
 }
 
 
