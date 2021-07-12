@@ -275,9 +275,7 @@ impl GuiState {
 
                     }
                     if ui.small_button(im_str!("Clear Motion Profile")) {
-
                         self.controller_commands.lock().push(InterfaceCommand::SendCommand(Command::SetMotionProfile{profile: 0}));
-
                     }
 
                     ui.next_column();
@@ -291,6 +289,13 @@ impl GuiState {
                     }
 
                     ui.next_column();
+
+                    if ui.small_button(im_str!("Enable Position Control")) {
+                        self.controller_commands.lock().push(InterfaceCommand::SendCommand(Command::SetPositionControl));
+                    }
+                    if ui.small_button(im_str!("Enable Step/Direction Control")) {
+                        self.controller_commands.lock().push(InterfaceCommand::SendCommand(Command::SetStepDirectionControl));
+                    }
                 
                 } else {
                     ui.text("Connect to a device to see tuning menu.");

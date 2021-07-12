@@ -8,6 +8,7 @@ const SWD_COMMAND_BUFFER_LEN: usize = 32;
 pub enum Command {
     MotorStop,
     MotorStart,
+    SetStepDirectionControl,
     SetPositionControl,
     SetVelocityControl,
     SetTorqueControl,
